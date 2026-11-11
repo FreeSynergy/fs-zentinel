@@ -27,6 +27,8 @@ upstreams {
         target "127.0.0.1:8443"
         tls {
             sni "${vault:fs/kanidm/domain}"
+            // Kanidm's certificate is a public one for that name, so the system roots verify it. With a private CA add:
+            // ca-cert "/path/to/ca.pem"
         }
     }
 }
