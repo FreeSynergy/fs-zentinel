@@ -6,7 +6,7 @@ FreeSynergy.Zentinel: everything FreeSynergy needs to ship the [Zentinel](https:
 - **Public configuration** `config/zentinel.kdl` (KDL) with defaults. It is a template: secrets are `${vault:…}` placeholders filled from the vault (ADR 0067); no secret is ever stored here (ADR 0054).
 - **Capability tags** `capabilities.toml` for the catalog (gateway, OIDC, OAuth2, SCIM, LDAP, RADIUS, PAM, SSH keys, passkeys: yes / no / unstable, each with its source).
 - **Docs** in English and German (`docs/en`, `docs/de`) and an **export** of the configuration (`export/config-export.json`).
-- `docs/ROADMAP.md`: later work (login agent against Kanidm, redirect, control plane).
+- `docs/ROADMAP.md`: later work (login agent against Kanidm, redirect, control plane). `docs/known-limits.md`: open items and decisions.
 
 ```sh
 python3 -I scripts/repo_tool.py check    # validate everything; secrets must be placeholders
