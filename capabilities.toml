@@ -1,0 +1,83 @@
+# Capability tags (ADR 0068). relation: provides | requires | recommends. support: yes | no | unstable.
+# Names follow the topic interfaces (fs-interfaces, thread T) and stay provisional until that list is final.
+
+[package]
+id = "fs-zentinel"
+upstream = "Zentinel"
+version = "26.11_1"
+checked = "2026-11-11"
+
+[[capability]]
+tag = "gateway.reverse-proxy"
+relation = "provides"
+support = "yes"
+source = "https://github.com/zentinelproxy/zentinel/blob/26.11_1/README.md"
+text_en = "Reverse proxy with TLS termination, routing by host and path, load balancing, health checks, rate limiting, hot reload (SIGHUP)."
+text_de = "Reverse-Proxy mit TLS-Abschluss, Routing nach Host und Pfad, Lastverteilung, Gesundheitsprüfung, Ratenbegrenzung, Neuladen im Betrieb (SIGHUP)."
+
+[[capability]]
+tag = "identity.oidc"
+relation = "provides"
+support = "unstable"
+source = "https://github.com/zentinelproxy/zentinel-agent-auth/blob/v0.3.0/README.md"
+text_en = "Only a check of OIDC bearer tokens against a JWKS in the separate auth agent, marked experimental; no browser login (no authorisation-code flow). Zentinel is a gate without login of its own for now."
+text_de = "Nur die Prüfung von OIDC-Bearer-Tokens gegen ein JWKS im getrennten Auth-Agenten, als experimentell gekennzeichnet; kein Browser-Login (kein Authorization-Code-Ablauf). Zentinel ist vorerst ein Tor ohne eigenen Login."
+
+[[capability]]
+tag = "identity.oauth2"
+relation = "provides"
+support = "unstable"
+source = "https://github.com/zentinelproxy/zentinel-agent-auth/blob/v0.3.0/README.md"
+text_en = "Bearer/JWT validation (HS*, RS*, ES*) in the auth agent; SAML, mTLS and token exchange are refused by the agent because they do not verify what they trust."
+text_de = "Bearer-/JWT-Prüfung (HS*, RS*, ES*) im Auth-Agenten; SAML, mTLS und Token-Exchange lehnt der Agent ab, weil sie das Vertraute nicht prüfen."
+
+[[capability]]
+tag = "identity.scim"
+relation = "provides"
+support = "unstable"
+source = "https://github.com/zentinelproxy/zentinel-agent-auth/blob/v0.3.0/README.md"
+text_en = "A SCIM 2.0 user store in the auth agent that can block deactivated OIDC users; experimental."
+text_de = "Ein SCIM-2.0-Nutzerspeicher im Auth-Agenten, der deaktivierte OIDC-Nutzer sperren kann; experimentell."
+
+[[capability]]
+tag = "identity.ldap"
+relation = "provides"
+support = "no"
+text_en = "Not offered; a proxy has no directory."
+text_de = "Wird nicht angeboten; ein Proxy hat kein Verzeichnis."
+
+[[capability]]
+tag = "identity.radius"
+relation = "provides"
+support = "no"
+text_en = "Not offered."
+text_de = "Wird nicht angeboten."
+
+[[capability]]
+tag = "identity.pam"
+relation = "provides"
+support = "no"
+text_en = "Not offered."
+text_de = "Wird nicht angeboten."
+
+[[capability]]
+tag = "identity.ssh-keys"
+relation = "provides"
+support = "no"
+text_en = "Not offered."
+text_de = "Wird nicht angeboten."
+
+[[capability]]
+tag = "identity.passkeys"
+relation = "provides"
+support = "no"
+text_en = "Not offered; passkeys are handled by the login service behind the gate."
+text_de = "Wird nicht angeboten; Passkeys übernimmt der Anmeldedienst hinter dem Tor."
+
+[[capability]]
+tag = "identity.oidc"
+relation = "recommends"
+support = "yes"
+source = "https://github.com/FreeSynergy/fs-documentation/blob/main/conventions/decisions/0068-faehigkeiten-und-spiegel.md"
+text_en = "Zentinel does not need a login service, but programs behind it use one (Kanidm) for their own sign-in."
+text_de = "Zentinel braucht keinen Anmeldedienst, aber die Programme dahinter nutzen einen (Kanidm) für ihre Anmeldung."

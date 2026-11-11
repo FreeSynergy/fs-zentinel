@@ -1,0 +1,68 @@
+# Describes the fields of the config files: documentation, export and secret check come from here.
+
+[[file]]
+path = "config/zentinel.kdl"
+
+  [[file.field]]
+  key = "schema-version"
+  type = "string"
+  default = "1.0"
+  en = "Configuration schema version."
+  de = "Version des Konfigurationsschemas."
+
+  [[file.field]]
+  key = "system.worker-threads"
+  type = "integer"
+  default = "0"
+  en = "Worker threads; 0 = one per CPU core."
+  de = "Arbeits-Threads; 0 = einer je CPU-Kern."
+
+  [[file.field]]
+  key = "system.graceful-shutdown-timeout-secs"
+  type = "integer"
+  default = "30"
+  en = "Seconds to finish running requests on shutdown."
+  de = "Sekunden, um laufende Anfragen beim Beenden abzuschließen."
+
+  [[file.field]]
+  key = "listeners.listener.https.address"
+  type = "string"
+  default = "0.0.0.0:443"
+  en = "Public HTTPS address of the gate."
+  de = "Öffentliche HTTPS-Adresse des Tores."
+
+  [[file.field]]
+  key = "tls.cert-file"
+  type = "path"
+  default = "/etc/zentinel/tls/fullchain.pem"
+  en = "Public certificate chain (PEM)."
+  de = "Öffentliche Zertifikatskette (PEM)."
+
+  [[file.field]]
+  key = "tls.key-file"
+  type = "path"
+  secret = true
+  vault = "fs/zentinel/tls-key#file"
+  en = "Private TLS key file. The vault writes the file; the path in the template is a placeholder."
+  de = "Datei mit dem privaten TLS-Schlüssel. Der Tresor schreibt die Datei; der Pfad im Muster ist ein Platzhalter."
+
+  [[file.field]]
+  key = "upstreams.upstream.kanidm.target"
+  type = "string"
+  default = "127.0.0.1:8443"
+  en = "Where Kanidm listens (loopback)."
+  de = "Wo Kanidm lauscht (Loopback)."
+
+  [[file.field]]
+  key = "upstreams.upstream.kanidm.tls.sni"
+  type = "string"
+  vault = "fs/kanidm/domain"
+  en = "Server name for the TLS connection to Kanidm; the public domain of the login service (not a secret, differs per installation)."
+  de = "Servername für die TLS-Verbindung zu Kanidm; die öffentliche Domain des Anmeldedienstes (kein Geheimnis, je Installation verschieden)."
+
+  [[file.field]]
+  key = "routes.route.kanidm.matches.host"
+  type = "string"
+  vault = "fs/kanidm/domain"
+  en = "Host name routed to Kanidm."
+  de = "Hostname, der an Kanidm geleitet wird."

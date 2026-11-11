@@ -1,0 +1,50 @@
+// FreeSynergy.Zentinel: public default configuration (KDL), the gate in front of the programs.
+// TEMPLATE: ${vault:...} placeholders are replaced from the vault (ADR 0067) when the file is rendered on the server.
+// No secret value is ever stored in this repository (ADR 0054). `zentinel test -c <file>` validates a rendered file.
+schema-version "1.0"
+
+system {
+    worker-threads 0
+    graceful-shutdown-timeout-secs 30
+}
+
+listeners {
+    // No plain-HTTP listener: 26.11_1 has no documented redirect handler (an HTTP-to-HTTPS redirect is on docs/ROADMAP.md).
+    listener "https" {
+        address "0.0.0.0:443"
+        protocol "https"
+        tls {
+            // Public certificate chain; the private key file is written by the vault.
+            cert-file "/etc/zentinel/tls/fullchain.pem"
+            key-file "${vault:fs/zentinel/tls-key#file}"
+        }
+    }
+}
+
+upstreams {
+    // Kanidm listens on the loopback only and speaks TLS.
+    upstream "kanidm" {
+        target "127.0.0.1:8443"
+        tls {
+            sni "${vault:fs/kanidm/domain}"
+        }
+    }
+}
+
+routes {
+    // The login service. Programs without a login of their own get an agent here later (docs/ROADMAP.md).
+    route "kanidm" {
+        matches {
+            host "${vault:fs/kanidm/domain}"
+            path-prefix "/"
+        }
+        upstream "kanidm"
+        policies {
+            response-headers {
+                set {
+                    "Strict-Transport-Security" "max-age=31536000; includeSubDomains"
+                }
+            }
+        }
+    }
+}

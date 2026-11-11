@@ -1,0 +1,117 @@
+# Mirror the maker's Zentinel release: download, verify (SHA-256 + Sigstore cosign with the identity pinned in mirror.toml),
+# add source tarball and licence, sign everything with the FreeSynergy release key, create a DRAFT release. Never publishes.
+# Runs only by hand. Nothing is installed on a developer machine; cosign runs in this workflow.
+name: mirror
+on:
+  workflow_dispatch:
+    inputs:
+      build_only:
+        description: "Test run: verify and upload artifacts only (no signing, no release); for before the signing secrets are set"
+        type: boolean
+        default: false
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+jobs:
+  mirror:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - if: ${{ !inputs.build_only }}
+        name: Signing key must be present (a mirror is never published unsigned)
+        env:
+          K: ${{ secrets.GPG_PRIVATE_KEY }}
+        run: test -n "$K" || { echo "::error::GPG_PRIVATE_KEY is not set in this repository"; exit 1; }
+      - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+      - name: Read the pin from mirror.toml
+        id: pin
+        run: |
+          python3 -I - >> "$GITHUB_OUTPUT" <<'PY'
+          import tomllib
+          m = tomllib.load(open("mirror.toml", "rb"))
+          print("repository=" + m["source"]["repository"]); print("tag=" + m["source"]["tag"]); print("commit=" + m["source"]["commit"])
+          print("version=" + m["upstream"]["version"])
+          print("identity=" + m["verification"]["certificate_identity"]); print("issuer=" + m["verification"]["certificate_oidc_issuer"])
+          PY
+      - name: Upstream tag must still resolve to the pinned commit
+        env:
+          REPO: ${{ steps.pin.outputs.repository }}
+          TAG: ${{ steps.pin.outputs.tag }}
+          COMMIT: ${{ steps.pin.outputs.commit }}
+        run: |
+          set -euo pipefail
+          got=$(git ls-remote "$REPO" "refs/tags/$TAG" "refs/tags/$TAG^{}" | awk 'END{print $1}')
+          echo "upstream $TAG -> $got (pinned $COMMIT)"
+          test "$got" = "$COMMIT"
+      - name: Download the maker's files, verify SHA-256 and the Sigstore signature
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.pin.outputs.tag }}
+          V: ${{ steps.pin.outputs.version }}
+          IDENTITY: ${{ steps.pin.outputs.identity }}
+          ISSUER: ${{ steps.pin.outputs.issuer }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist upstream
+          for arch in linux-amd64 linux-arm64; do
+            for ext in tar.gz tar.gz.sha256 tar.gz.bundle; do
+              gh release download "$TAG" -R zentinelproxy/zentinel -D upstream -p "zentinel-$V-$arch.$ext"
+            done
+          done
+          gh release download "$TAG" -R zentinelproxy/zentinel -D upstream -p "zentinel-$V-sbom.spdx.json" -p "zentinel-$V-sbom.cdx.json" -p checksums.txt
+          cd upstream
+          for arch in linux-amd64 linux-arm64; do
+            f="zentinel-$V-$arch.tar.gz"
+            sha256sum --check --strict "$f.sha256"
+            grep -F "  $f" checksums.txt | sha256sum --check --strict -
+            cosign verify-blob --bundle "$f.bundle" --certificate-identity "$IDENTITY" --certificate-oidc-issuer "$ISSUER" "$f"
+          done
+          cp zentinel-"$V"-linux-*.tar.gz zentinel-"$V"-sbom.*.json ../dist/
+      - name: Source tarball and licence (Apache-2.0)
+        env:
+          REPO: ${{ steps.pin.outputs.repository }}
+          COMMIT: ${{ steps.pin.outputs.commit }}
+          V: ${{ steps.pin.outputs.version }}
+        run: |
+          set -euo pipefail
+          git init -q src && cd src
+          git remote add origin "$REPO"
+          git fetch -q --depth 1 origin "$COMMIT"
+          git checkout -q FETCH_HEAD
+          test "$(git rev-parse HEAD)" = "$COMMIT"
+          git archive --format=tar --prefix="zentinel-$V/" HEAD | gzip -n > "../dist/zentinel-$V-source.tar.gz"
+          cp LICENSE ../dist/LICENSE-Apache-2.0
+      - if: ${{ !inputs.build_only }}
+        uses: FreeSynergy/fs-release/actions/sign-files@main
+        with:
+          mode: packages
+          private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+      - uses: FreeSynergy/fs-release/actions/checksums@main
+      - if: ${{ !inputs.build_only }}
+        uses: FreeSynergy/fs-release/actions/sign-files@main
+        with:
+          mode: detached
+          private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+      - if: ${{ !inputs.build_only }}
+        name: Verify our own signatures before releasing
+        run: scripts/verify-mirror.sh dist
+      - if: ${{ !inputs.build_only }}
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/*
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: zentinel-mirror
+          path: dist
+      - if: ${{ !inputs.build_only }}
+        uses: FreeSynergy/fs-release/actions/draft-release@main
+        with:
+          tag: v${{ steps.pin.outputs.version }}
+          name: Zentinel
+          token: ${{ github.token }}

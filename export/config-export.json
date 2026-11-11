@@ -1,0 +1,144 @@
+{
+  "format": 1,
+  "repo": "fs-zentinel",
+  "program": "Zentinel",
+  "version": "26.11_1",
+  "capabilities": [
+    {
+      "tag": "gateway.reverse-proxy",
+      "relation": "provides",
+      "support": "yes"
+    },
+    {
+      "tag": "identity.oidc",
+      "relation": "provides",
+      "support": "unstable"
+    },
+    {
+      "tag": "identity.oauth2",
+      "relation": "provides",
+      "support": "unstable"
+    },
+    {
+      "tag": "identity.scim",
+      "relation": "provides",
+      "support": "unstable"
+    },
+    {
+      "tag": "identity.ldap",
+      "relation": "provides",
+      "support": "no"
+    },
+    {
+      "tag": "identity.radius",
+      "relation": "provides",
+      "support": "no"
+    },
+    {
+      "tag": "identity.pam",
+      "relation": "provides",
+      "support": "no"
+    },
+    {
+      "tag": "identity.ssh-keys",
+      "relation": "provides",
+      "support": "no"
+    },
+    {
+      "tag": "identity.passkeys",
+      "relation": "provides",
+      "support": "no"
+    },
+    {
+      "tag": "identity.oidc",
+      "relation": "recommends",
+      "support": "yes"
+    }
+  ],
+  "files": [
+    {
+      "path": "config/zentinel.kdl",
+      "sha256": "bee49137f9f6848987f4958e874d2b03c67640df9e26490fa8ae747824c56b4c",
+      "placeholders": [
+        "...",
+        "fs/kanidm/domain",
+        "fs/zentinel/tls-key#file"
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "file": "config/zentinel.kdl",
+      "key": "schema-version",
+      "type": "string",
+      "default": "1.0",
+      "secret": false,
+      "vault": null
+    },
+    {
+      "file": "config/zentinel.kdl",
+      "key": "system.worker-threads",
+      "type": "integer",
+      "default": "0",
+      "secret": false,
+      "vault": null
+    },
+    {
+      "file": "config/zentinel.kdl",
+      "key": "system.graceful-shutdown-timeout-secs",
+      "type": "integer",
+      "default": "30",
+      "secret": false,
+      "vault": null
+    },
+    {
+      "file": "config/zentinel.kdl",
+      "key": "listeners.listener.https.address",
+      "type": "string",
+      "default": "0.0.0.0:443",
+      "secret": false,
+      "vault": null
+    },
+    {
+      "file": "config/zentinel.kdl",
+      "key": "tls.cert-file",
+      "type": "path",
+      "default": "/etc/zentinel/tls/fullchain.pem",
+      "secret": false,
+      "vault": null
+    },
+    {
+      "file": "config/zentinel.kdl",
+      "key": "tls.key-file",
+      "type": "path",
+      "default": null,
+      "secret": true,
+      "vault": "fs/zentinel/tls-key#file"
+    },
+    {
+      "file": "config/zentinel.kdl",
+      "key": "upstreams.upstream.kanidm.target",
+      "type": "string",
+      "default": "127.0.0.1:8443",
+      "secret": false,
+      "vault": null
+    },
+    {
+      "file": "config/zentinel.kdl",
+      "key": "upstreams.upstream.kanidm.tls.sni",
+      "type": "string",
+      "default": null,
+      "secret": false,
+      "vault": "fs/kanidm/domain"
+    },
+    {
+      "file": "config/zentinel.kdl",
+      "key": "routes.route.kanidm.matches.host",
+      "type": "string",
+      "default": null,
+      "secret": false,
+      "vault": "fs/kanidm/domain"
+    }
+  ],
+  "note": "Configuration export without secrets. Secret values are never stored here; each placeholder names a vault path (ADR 0067)."
+}

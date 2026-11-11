@@ -1,0 +1,70 @@
+# Mirror description (ADR 0068): what we publish, where it comes from, how it was checked and signed.
+# Read by scripts/repo_tool.py and .github/workflows/mirror.yml. Nothing in here is a secret.
+
+[repo]
+name = "fs-zentinel"
+adr = ["0068", "0067", "0054", "0015"]
+
+[upstream]
+name = "Zentinel"
+version = "26.11_1"
+released = "2026-11-07"
+license = "Apache-2.0"
+homepage = "https://zentinelproxy.io"
+repository = "https://github.com/zentinelproxy/zentinel"
+
+# The maker signs its release archives with Sigstore cosign (keyless, tied to the GitHub Actions identity) and publishes
+# SHA-256 files and SBOMs. We mirror the maker's package unchanged, verify it in CI, then add our own signature.
+[source]
+repository = "https://github.com/zentinelproxy/zentinel"
+tag = "26.11_1"
+tag_signed = false
+commit = "b3a8659846f70d3e78623dce6a6860cd7e2bcff2"
+check = "tag-resolves-to-pinned-commit"
+
+[verification]
+method = "cosign verify-blob --bundle <file>.bundle (Sigstore keyless) plus SHA-256 from <file>.sha256"
+certificate_identity = "https://github.com/zentinelproxy/zentinel/.github/workflows/release.yml@refs/tags/26.11_1"
+certificate_oidc_issuer = "https://token.actions.githubusercontent.com"
+where = "GitHub Actions, .github/workflows/mirror.yml (sigstore/cosign-installer; nothing is installed locally)"
+note = "Keyless signing has no fixed key: trust is the certificate identity above plus the public Rekor transparency log."
+
+[signing]
+method = "OpenPGP detached (.asc) per file, plus SHA256SUMS.txt; SLSA build provenance by GitHub for the mirror itself"
+key_fingerprint = "16A4A3EE563AEF51FCF0C55DED7B57C4A1904342"   # FreeSynergy Release, same key as fs-release and fs-catalog
+public_key = "https://github.com/FreeSynergy/fs-release/blob/main/release-signing-key.asc"
+
+[[artifact]]
+name = "zentinel-26.11_1-linux-amd64.tar.gz"
+kind = "binary"
+verification = "maker-cosign-and-sha256"
+
+[[artifact]]
+name = "zentinel-26.11_1-linux-arm64.tar.gz"
+kind = "binary"
+verification = "maker-cosign-and-sha256"
+
+[[artifact]]
+name = "zentinel-26.11_1-sbom.spdx.json"
+kind = "sbom"
+verification = "published-by-maker"
+
+[[artifact]]
+name = "zentinel-26.11_1-sbom.cdx.json"
+kind = "sbom"
+verification = "published-by-maker"
+
+[[artifact]]
+name = "zentinel-26.11_1-source.tar.gz"
+kind = "source"
+contents = "git archive of the pinned commit (Apache-2.0: source of the same version travels with the binary)"
+verification = "built-from-pinned-commit"
+
+[[artifact]]
+name = "LICENSE-Apache-2.0"
+kind = "licence"
+verification = "copied-from-pinned-commit"
+
+[not_mirrored]
+control_plane_agent = "zentinel-cp-agent (zentinelproxy/zentinel-control-plane, Apache-2.0, Beta, Go) is NOT mirrored yet: its node API is documented but not declared stable (README: Beta; no versioning or compatibility statement). Decision of the strategy pending, see docs/ROADMAP.md."
+darwin_builds = "not needed for the FreeSynergy server"
