@@ -5,6 +5,7 @@ Zentinel ist das Tor eines FreeSynergy-Servers: Es nimmt alle öffentlichen Verb
 - [Fähigkeiten](capabilities.md): was Zentinel bietet und was nicht, mit Quellen.
 - [Konfiguration](configuration.md): die öffentlichen KDL-Voreinstellungen und was aus dem Tresor kommt.
 - [Spiegel](mirror.md): woher das Paket kommt und wie es geprüft wird.
+- [Bekannte Grenzen](known-limits.md): offene Punkte und Entscheidungen.
 
 Zentinel hat vorerst keinen eigenen Login: Programme melden sich selbst per OIDC bei Kanidm an. Ein Login-Agent für Programme ohne eigenen Login steht auf der [Roadmap](../ROADMAP.md).
 
