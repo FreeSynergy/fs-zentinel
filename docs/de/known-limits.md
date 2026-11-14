@@ -4,6 +4,8 @@ git-bug ist in den FreeSynergy-Repos noch nicht eingerichtet (es wird später f�
 
 ## 1. `ca-cert` im KDL half bei einer privaten CA nicht (Zentinel 26.11_1)
 
+> Mit 26.11_2 (gepinnt seit 2026-11-14) nicht neu geprüft. Der Befund unten stammt von 26.11_1.
+
 - **Geprüft:** Ein Upstream mit `tls { sni "..." ca-cert "/pfad/ca.pem" }` scheiterte weiter mit `invalid peer certificate: UnknownIssuer`, wenn der Upstream (Kanidm 1.12.0) ein Zertifikat einer privaten CA nutzte; das Tor antwortete 502. Mit der Umgebungsvariable `SSL_CERT_FILE=<ca.pem>` am Zentinel-Prozess funktionierte derselbe Aufbau; der lokale Test nutzt diese Variable.
 - **Ungeprüft:** warum. Im Hauptzweig des Herstellers gibt es in `crates/proxy/src/tls.rs` eine Funktion `build_upstream_tls_config`, die `ca_cert` liest; ob sie in 26.11_1 an die echte Upstream-Verbindung angeschlossen ist, haben wir nicht geprüft.
 - **Entscheidung:** Unsere Vorlage enthält kein `ca-cert`. Auf dem echten Server hat Kanidm ein öffentliches Zertifikat für seinen Namen, das die System-Wurzeln prüfen. Bei privater CA `SSL_CERT_FILE` nutzen. Erweist sich das als Zentinel-Fehler, folgt später ein kurzes Upstream-Issue; jetzt keins.

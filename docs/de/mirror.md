@@ -2,7 +2,7 @@
 
 Der Hersteller veröffentlicht signierte Archive, deshalb spiegelt FreeSynergy sie unverändert (ADR 0068):
 
-1. `mirror.toml` legt Release `26.11_2`, den Commit und die **erwartete Signatur-Identität** fest (`https://github.com/zentinelproxy/zentinel/.github/workflows/release.yml@refs/tags/26.11_2`, Aussteller `https://token.actions.githubusercontent.com`) sowie Commit, Repository und Ref, die das Signaturzertifikat tragen muss (cosign-Optionen `--certificate-github-workflow-sha/-repository/-ref`; das Zertifikat des Herstellers enthält sie als OIDs 1.3.6.1.4.1.57264.1.3/.5/.6)..
+1. `mirror.toml` legt Release `26.11_2`, den Commit und die **erwartete Signatur-Identität** fest (`https://github.com/zentinelproxy/zentinel/.github/workflows/release.yml@refs/tags/26.11_2`, Aussteller `https://token.actions.githubusercontent.com`) sowie Commit, Repository und Ref, die das Signaturzertifikat tragen muss (cosign-Optionen `--certificate-github-workflow-sha/-repository/-ref`; das Zertifikat des Herstellers enthält sie als OIDs 1.3.6.1.4.1.57264.1.3/.5/.6).
 2. GitHub Actions lädt die Archive, prüft SHA-256 und führt `cosign verify-blob --bundle` aus (Sigstore, schlüssellos: es gibt keinen festen Schlüssel; Vertrauen ist die Identität oben plus das öffentliche Rekor-Protokoll). Schlägt etwas fehl, bricht der Lauf ab.
 3. Das Quellcode-Archiv derselben Version (git archive des festgelegten Commits), die Lizenz und die SBOMs des Herstellers kommen dazu.
 4. Jede Datei bekommt eine OpenPGP-Signatur (`.asc`) vom FreeSynergy-Release-Schlüssel, `SHA256SUMS.txt` listet die Dateien.

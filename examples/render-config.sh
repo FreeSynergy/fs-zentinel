@@ -3,7 +3,7 @@
 #   SITE1=<domain-1> SITE2=<domain-2> SITE3=<domain-3> ACME_EMAIL=<contact-address> \
 #     ./render-config.sh [--staging|--production] [--install-pages] <output.kdl>
 # Environment (all required except the last two): SITE1 SITE2 SITE3 (domains), ACME_EMAIL (contact for Let's Encrypt),
-#   ACME_STAGING (default true: Let's Encrypt staging, no rate limits, untrusted certificates; --production sets it to false),
+#   ACME_STAGING (default true: Let's Encrypt staging, much higher limits than production, untrusted certificates; --production sets it to false),
 #   HETZNER_TOKEN_FILE (only with --dns01-hetzner, default /etc/zentinel/secrets/hetzner-dns-token; owner zentinel, mode 0600; created by the person, never here),
 #   WEBROOT (default /srv/www; one directory per domain below it; with --install-pages the page is copied there, needs write access).
 # No secrets are read or written. Values are checked strictly because they end up inside a KDL file.
@@ -30,12 +30,12 @@ tokenfile=${HETZNER_TOKEN_FILE:-/etc/zentinel/secrets/hetzner-dns-token}   # onl
 
 dom='^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$'
 for s in "$SITE1" "$SITE2" "$SITE3"; do [[ $s =~ $dom ]] || die "'$s' is not a plain lower-case domain name"; done
-[ "$SITE1" != "$SITE2" ] && [ "$SITE1" != "$SITE3" ] && [ "$SITE2" != "$SITE3" ] || die "the three domains must differ (upstream: one domain, one acme block)"
+if [ "$SITE1" = "$SITE2" ] || [ "$SITE1" = "$SITE3" ] || [ "$SITE2" = "$SITE3" ]; then die "the three domains must differ (upstream: one domain, one acme block)"; fi
 [[ $ACME_EMAIL =~ ^[A-Za-z0-9._+-]+@([a-z0-9-]+\.)+[a-z]{2,63}$ ]] || die "ACME_EMAIL is not a plain e-mail address"
 [[ $staging = true || $staging = false ]] || die "ACME_STAGING must be true or false"
-[[ $webroot =~ ^/[A-Za-z0-9._/-]*$ ]] && [[ $webroot != */ ]] && [[ $webroot != *..* ]] || die "WEBROOT must be an absolute path of plain characters, without trailing slash"
+if ! { [[ $webroot =~ ^/[A-Za-z0-9._/-]*$ ]] && [[ $webroot != */ ]] && [[ $webroot != *..* ]]; }; then die "WEBROOT must be an absolute path of plain characters, without trailing slash"; fi
 
-[[ $tokenfile =~ ^/[A-Za-z0-9._/-]*$ ]] && [[ $tokenfile != *..* ]] || die "HETZNER_TOKEN_FILE must be an absolute path of plain characters"
+if ! { [[ $tokenfile =~ ^/[A-Za-z0-9._/-]*$ ]] && [[ $tokenfile != *..* ]]; }; then die "HETZNER_TOKEN_FILE must be an absolute path of plain characters"; fi
 text=$(cat "$here/$tpl")
 for pair in "SITE1=$SITE1" "SITE2=$SITE2" "SITE3=$SITE3" "ACME_EMAIL=$ACME_EMAIL" "ACME_STAGING=$staging" "WEBROOT=$webroot" "HETZNER_TOKEN_FILE=$tokenfile"; do
   text=${text//"@${pair%%=*}@"/${pair#*=}}

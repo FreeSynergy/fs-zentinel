@@ -15,6 +15,7 @@ Vorlage, keine fertige Produktionsdatei. Keine Geheimnisse, keine echten Schlüs
 
 Warum diese Reihenfolge: Kann das erste Zertifikat nicht ausgestellt werden, bricht Zentinel beim Start ab ("failing fast", `crates/proxy/src/main.rs`, Upstream 26.11_2) und liefert nichts aus. Mit ACME in der Konfiguration lässt es sich also erst starten, wenn die DNS-Einträge schon auf den Server zeigen und Port 80 erreichbar ist. Der erste Start nutzt deshalb die Konfiguration nur mit HTTP.
 
+0. Vor allem anderen: das alte Webserver-Programm stoppen und prüfen, dass die Ports 80 und 443 frei sind: `ss -tlnp | grep ':80\|:443'` darf nichts ausgeben (Server 2 wird zwar neu installiert, dies ist die Kontrolle).
 1. Zentinel installieren (das `.deb` dieses Repositories oder den Tarball), Wurzelverzeichnisse anlegen, die Übergangskonfiguration (nur HTTP, kein TLS) erzeugen:
    ```sh
    SITE1=<domain-1> SITE2=<domain-2> SITE3=<domain-3> ACME_EMAIL=<kontaktadresse> \
@@ -23,7 +24,7 @@ Warum diese Reihenfolge: Kann das erste Zertifikat nicht ausgestellt werden, bri
    systemctl enable --now zentinel
    ```
    Von einem anderen Rechner mit der IP-Adresse des Servers und je einem `Host:`-Kopf prüfen, dass die Seite kommt. Port 80 muss aus dem Internet erreichbar sein (Firewall, Anbieter).
-2. DNS (Hetzner-DNS, setzt der Nutzer): A-Einträge der drei Domains auf Server 2. Keine AAAA-Einträge setzen, solange die Listener nicht auch IPv6 binden: Die Beispiele binden nur `0.0.0.0` (IPv4), und Let's Encrypt bevorzugt IPv6, wenn ein Eintrag existiert (hier nicht getestet). Warten, bis die Einträge sichtbar sind (`dig +short <domain> @1.1.1.1`).
+2. DNS (Hetzner-DNS, setzt der Nutzer): A-Einträge der drei Domains auf Server 2. Vorhandene AAAA-Einträge (z. B. die des alten Servers) aktiv entfernen. Keine AAAA-Einträge setzen, solange die Listener nicht auch IPv6 binden: Die Beispiele binden nur `0.0.0.0` (IPv4), und Let's Encrypt bevorzugt IPv6, wenn ein Eintrag existiert (hier nicht getestet). Warten, bis die Einträge sichtbar sind (`dig +short <domain> @1.1.1.1`).
 3. Staging-Zertifikate: die volle Konfiguration erzeugen, neu starten:
    ```sh
    ./render-config.sh --staging /etc/zentinel/zentinel.kdl      # dieselben Variablen wie oben
@@ -38,7 +39,8 @@ Warum diese Reihenfolge: Kann das erste Zertifikat nicht ausgestellt werden, bri
    ./render-config.sh --production /etc/zentinel/zentinel.kdl
    zentinel test -c /etc/zentinel/zentinel.kdl && systemctl start zentinel
    ```
-   Let's Encrypt begrenzt Bestellungen in der Produktion (Rate Limits): Schritt 4 nicht ohne Not wiederholen.
+   Let's Encrypt begrenzt Bestellungen in der Produktion (Rate Limits): Schritt 4 nicht ohne Not wiederholen. Die Unit hat `Restart=on-failure` (bis zu 3 Neustarts pro Minute): Schlägt der Start fehl, sofort `systemctl stop zentinel` und `journalctl -u zentinel` lesen, bevor man es erneut versucht; sonst verbrauchen die automatischen Neustarts das Limit für fehlgeschlagene Prüfungen.
+5. Rückweg: Scheitert Schritt 3 oder 4, sind alle drei Seiten offline. Zurück zum Übergangszustand mit `./render-config.sh --http-only /etc/zentinel/zentinel.kdl && systemctl restart zentinel`, Ursache beheben, dann ab Schritt 3 wiederholen.
 
 ## Was belegt ist und was nicht
 

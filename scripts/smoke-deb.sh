@@ -29,7 +29,7 @@ fi
 # ---- inside the container -----------------------------------------------------------------------------------------
 export DEBIAN_FRONTEND=noninteractive
 debs=(/dist/zentinel_*_amd64.deb)
-[ "${#debs[@]}" = 1 ] && [ -f "${debs[0]}" ] || die "expected exactly one /dist/zentinel_*_amd64.deb, found: ${debs[*]}"
+if ! { [ "${#debs[@]}" = 1 ] && [ -f "${debs[0]}" ]; }; then die "expected exactly one /dist/zentinel_*_amd64.deb, found: ${debs[*]}"; fi
 deb=${debs[0]}
 # shellcheck disable=SC1091
 . /etc/os-release; echo "platform: $PRETTY_NAME, glibc $(ldd --version | head -n1 | awk '{print $NF}')"
