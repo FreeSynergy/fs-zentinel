@@ -1,0 +1,14 @@
+# gitleaks configuration (used automatically by .github/workflows/secrets-scan.yml). The default rules stay on.
+# Cause of the earlier red runs: the rule "generic-api-key" takes the PUBLIC OpenPGP fingerprint in mirror.toml for a key (a 40-digit hex
+# string next to the word "key"). A fingerprint is the public name of our release key (it is printed in fs-release and checked in
+# scripts/verify-mirror.sh); it is not a secret and cannot be used to sign. Only this one value, in this one file, is allowed.
+title = "fs-zentinel"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Public OpenPGP fingerprint of the FreeSynergy release key (mirror.toml, [signing] key_fingerprint)"
+targetRules = ["generic-api-key"]
+paths = ['''^mirror\.toml$''']
+regexes = ['''16A4A3EE563AEF51FCF0C55DED7B57C4A1904342''']
