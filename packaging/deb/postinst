@@ -1,0 +1,18 @@
+#!/bin/sh
+# Creates the system user "zentinel" (upstream's sysusers file) and reloads systemd. Does NOT enable or start the service.
+set -e
+case "$1" in
+  configure)
+    if command -v systemd-sysusers >/dev/null 2>&1; then
+      systemd-sysusers /usr/lib/sysusers.d/zentinel.conf
+    fi
+    # systemd-sysusers is part of the "systemd" dependency; the fallback keeps the package usable when it cannot run (chroot, container)
+    if ! getent passwd zentinel >/dev/null 2>&1; then
+      addgroup --system zentinel >/dev/null 2>&1 || groupadd --system zentinel
+      adduser --system --ingroup zentinel --home /var/lib/zentinel --no-create-home --shell /usr/sbin/nologin zentinel >/dev/null 2>&1 \
+        || useradd --system --gid zentinel --home-dir /var/lib/zentinel --no-create-home --shell /usr/sbin/nologin zentinel
+    fi
+    if [ -d /run/systemd/system ]; then systemctl daemon-reload || true; fi
+    ;;
+esac
+exit 0

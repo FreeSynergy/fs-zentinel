@@ -12,7 +12,18 @@ cat > "$t/z.kdl" <<KDL
 schema-version "1.0"
 system { worker-threads 1 }
 listeners { listener "http" { address "127.0.0.1:$port"
- protocol "http" } }
+ protocol "http" }
+ listener "plain" { address "127.0.0.1:$((port+1))"
+ protocol "http"
+ namespace "redirect" } }
+namespace "redirect" {
+  filters { filter "to-https" { type "redirect"
+ scheme "https"
+ status-code 301 } }
+  routes { route "all" { matches { path-prefix "/" }
+ service-type "web"
+ filters "to-https" } }
+}
 routes {
   route "one" { matches { host "one.test"
  path-prefix "/" }
@@ -29,8 +40,8 @@ HOME="$t" "$ZENTINEL" -c "$t/z.kdl" >"$t/log" 2>&1 & pid=$!
 python3 -I - "$port" "$pid" <<'PY'
 import sys, time, http.client
 port, pid = int(sys.argv[1]), int(sys.argv[2])
-def get(host, path="/"):
-    c = http.client.HTTPConnection("127.0.0.1", port, timeout=5); c.request("GET", path, headers={"Host": host})
+def get(host, path="/", p=None):
+    c = http.client.HTTPConnection("127.0.0.1", p or port, timeout=5); c.request("GET", path, headers={"Host": host})
     r = c.getresponse(); return r.status, r.read().decode("utf-8", "replace"), dict(r.getheaders())
 for _ in range(50):
     try: get("one.test"); break
@@ -46,5 +57,8 @@ s, b, h = get("one.test", "/../two.test/index.html"); check("path traversal does
 s, b, h = get("one.test", "/%2e%2e/two.test/index.html"); check("encoded traversal does not reach the other root", "rebuilding two.test" not in b)
 s, b, h = get("one.test", "/missing.html"); check("missing file -> 404", s == 404)
 s, b, h = get("other.test"); check("unknown host does not get a page", "rebuilding" not in b)
+s, b, h = get("one.test", "/a/b", port + 1)
+check("port-80 style listener redirects to https (301, same host and path)", s == 301 and h.get("Location") == "https://one.test/a/b")
+s, b, h = get("one.test", "/", port); check("main listener is not redirected", s == 200)
 sys.exit(0 if ok else 1)
 PY

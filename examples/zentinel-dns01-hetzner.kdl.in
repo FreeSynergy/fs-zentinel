@@ -1,0 +1,170 @@
+// Zentinel: three sites with wildcard TLS via ACME DNS-01 and the Hetzner DNS provider.
+// !! DOES NOT WORK TODAY: Zentinel 26.11_1 / 26.11_2 talk to https://dns.hetzner.com/api/v1, which Hetzner removed on 2026-05-27
+// !! (status.hetzner.com incident c2146c42). The file only shows the configuration keys; use zentinel.kdl.in (HTTP-01) until upstream
+// !! supports the new Hetzner DNS API. The token file is NEVER part of a repository: the person puts it on the server, owner zentinel, mode 0600.
+// TEMPLATE. Render it with render-config.sh; the upper-case markers between two @ signs are replaced, nothing else. No secrets are needed or stored here.
+// Sources of every setting: examples/README.md (upstream docs: crates/proxy/docs/acme.md, config/examples/acme-san.kdl, kdl-format.md).
+//
+// Ports 80 and 443 are bound by the unprivileged user "zentinel" through CAP_NET_BIND_SERVICE in the shipped systemd unit.
+// ACME state (account key, certificates) lives in /var/lib/zentinel/acme (systemd StateDirectory, mode 0700).
+schema-version "1.0"
+
+system {
+    worker-threads 0
+    graceful-shutdown-timeout-secs 30
+}
+
+listeners {
+    // Plain HTTP: only redirects to HTTPS (namespace "redirect" below). Also needed for the ACME HTTP-01 challenge:
+    // the first certificates are fetched at start by a temporary challenge server on the address of the first http listener,
+    // later renewals are answered by the running proxy (upstream docs: crates/proxy/docs/acme.md).
+    listener "http" {
+        address "0.0.0.0:80"
+        protocol "http"
+        request-timeout-secs 30
+        namespace "redirect"
+    }
+
+    listener "https" {
+        address "0.0.0.0:443"
+        protocol "https"
+        request-timeout-secs 30
+        tls {
+            min-version "TLS1.2"
+
+            // One certificate per domain (apex and wildcard); a domain may appear in only one acme block (upstream rule).
+            acme {
+                email "@ACME_EMAIL@"
+                domains "@SITE1@" "*.@SITE1@"
+                staging #@ACME_STAGING@
+                storage "/var/lib/zentinel/acme"
+                challenge-type "dns-01"
+                dns-provider {
+                    type "hetzner"
+                    credentials-file "@HETZNER_TOKEN_FILE@"
+                    api-timeout-secs 30
+                    propagation {
+                        initial-delay-secs 20
+                        check-interval-secs 10
+                        timeout-secs 300
+                    }
+                }
+            }
+            sni {
+                acme {
+                    email "@ACME_EMAIL@"
+                    domains "@SITE2@" "*.@SITE2@"
+                    staging #@ACME_STAGING@
+                    storage "/var/lib/zentinel/acme"
+                    challenge-type "dns-01"
+                    dns-provider {
+                        type "hetzner"
+                        credentials-file "@HETZNER_TOKEN_FILE@"
+                        api-timeout-secs 30
+                        propagation {
+                            initial-delay-secs 20
+                            check-interval-secs 10
+                            timeout-secs 300
+                        }
+                    }
+                }
+            }
+            sni {
+                acme {
+                    email "@ACME_EMAIL@"
+                    domains "@SITE3@" "*.@SITE3@"
+                    staging #@ACME_STAGING@
+                    storage "/var/lib/zentinel/acme"
+                    challenge-type "dns-01"
+                    dns-provider {
+                        type "hetzner"
+                        credentials-file "@HETZNER_TOKEN_FILE@"
+                        api-timeout-secs 30
+                        propagation {
+                            initial-delay-secs 20
+                            check-interval-secs 10
+                            timeout-secs 300
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// A listener that belongs to a namespace serves only that namespace's routes (upstream: crates/config/src/scopes.rs), so port 80
+// redirects everything to HTTPS (301, same host and path; verified locally with test_serve.sh, the query string is NOT carried over)
+// while port 443 serves the sites.
+namespace "redirect" {
+    filters {
+        filter "to-https" {
+            type "redirect"
+            scheme "https"
+            status-code 301
+        }
+    }
+    routes {
+        route "to-https" {
+            matches {
+                path-prefix "/"
+            }
+            service-type "web"
+            filters "to-https"
+        }
+    }
+}
+
+routes {
+    route "site1" {
+        matches {
+            host "@SITE1@"
+            path-prefix "/"
+        }
+        service-type "static"
+        static-files {
+            root "@WEBROOT@/@SITE1@"
+            index "index.html"
+            cache-control "public, max-age=300"
+            compress #true
+        }
+    }
+    route "site2" {
+        matches {
+            host "@SITE2@"
+            path-prefix "/"
+        }
+        service-type "static"
+        static-files {
+            root "@WEBROOT@/@SITE2@"
+            index "index.html"
+            cache-control "public, max-age=300"
+            compress #true
+        }
+    }
+    route "site3" {
+        matches {
+            host "@SITE3@"
+            path-prefix "/"
+        }
+        service-type "static"
+        static-files {
+            root "@WEBROOT@/@SITE3@"
+            index "index.html"
+            cache-control "public, max-age=300"
+            compress #true
+        }
+    }
+}
+
+limits {
+    max-header-size 8192
+    max-header-count 100
+    max-body-size 1048576
+}
+
+observability {
+    logging {
+        level "info"
+        format "json"
+    }
+}

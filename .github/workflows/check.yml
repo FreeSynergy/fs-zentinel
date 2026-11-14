@@ -15,6 +15,6 @@ jobs:
       - name: Repo check (placeholders only, docs and export up to date)
         run: python3 -I scripts/repo_tool.py check
       - name: Shell scripts
-        run: bash -n scripts/verify-mirror.sh && (command -v shellcheck >/dev/null && shellcheck scripts/*.sh || true)
+        run: bash -n scripts/verify-mirror.sh && (command -v shellcheck >/dev/null && shellcheck scripts/*.sh examples/*.sh packaging/deb/postinst packaging/deb/prerm packaging/deb/postrm || true)
       - name: Selftest of the signature verifier (throw-away keys)
         run: scripts/test_verify_mirror.sh

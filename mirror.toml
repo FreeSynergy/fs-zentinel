@@ -29,6 +29,23 @@ certificate_oidc_issuer = "https://token.actions.githubusercontent.com"
 where = "GitHub Actions, .github/workflows/mirror.yml (sigstore/cosign-installer; nothing is installed locally)"
 note = "Keyless signing has no fixed key: trust is the certificate identity above plus the public Rekor transparency log."
 
+[build]
+# Nothing is compiled here: the .deb is a REPACKAGING of the verified maker binary (scripts/make-deb.sh, dpkg-deb on the runner).
+# Upstream's own files (systemd unit, sysusers file, starter configuration) go into the package; the only change is ExecStart=/usr/bin/zentinel.
+deb_revision = 1                          # package revision (ADR 0077): Debian version = <upstream with _ as .>-<revision>, e.g. 26.11.1-1 (Debian forbids "_")
+deb_arch = ["amd64", "arm64"]            # arm64 is built from the maker's arm64 tarball; the smoke test runs on amd64 only (runner), not verified on arm64
+
+[platform]
+# The maker builds on ubuntu-22.04 (glibc 2.35 by its release.yml comment); the amd64 binary of 26.11_1 needs GLIBC <= 2.34 (objdump -T), libgcc_s, libm, libc.
+min_glibc = "2.34"
+# Smoke test (scripts/smoke-deb.sh): the .deb is installed in each of these (pinned by digest, tags resolved 2026-11-14: debian 12, debian 13, ubuntu 22.04, ubuntu 24.04).
+smoke_images = [
+  "docker.io/library/debian@sha256:268fb24c39bca92d326dd83ea3abebe4a3f7751c804ffef23bb6d857dd343ff8",
+  "docker.io/library/debian@sha256:9c6e381421d0f48d1b8133e573f33c185ee16cbf505eda9c4a8a4791b25ea8a6",
+  "docker.io/library/ubuntu@sha256:74b12b11ffa550fba1929ad4d8d16533c34f6612728469671afba1b03b66881c",
+  "docker.io/library/ubuntu@sha256:2198e4c65076e9cb0b3d695219df667c0e3b0072da64ca3c2648aca17dcecaf5",
+]
+
 [signing]
 method = "OpenPGP detached (.asc) per file, plus SHA256SUMS.txt; SLSA build provenance by GitHub for the mirror itself"
 key_fingerprint = "16A4A3EE563AEF51FCF0C55DED7B57C4A1904342"   # FreeSynergy Release, same key as fs-release and fs-catalog
@@ -43,6 +60,18 @@ verification = "maker-cosign-and-sha256"
 name = "zentinel-26.11_1-linux-arm64.tar.gz"
 kind = "binary"
 verification = "maker-cosign-and-sha256"
+
+[[artifact]]
+name = "zentinel_26.11.1-1_amd64.deb"
+kind = "deb"
+contents = "REPACKAGING of the verified amd64 binary: /usr/bin/zentinel, upstream's systemd unit (ExecStart path changed) and sysusers file, upstream's starter /etc/zentinel/zentinel.kdl; not enabled or started on install"
+verification = "repackaged-from-verified-maker-binary"
+
+[[artifact]]
+name = "zentinel_26.11.1-1_arm64.deb"
+kind = "deb"
+contents = "same as amd64, from the maker's arm64 binary; not smoke-tested"
+verification = "repackaged-from-verified-maker-binary"
 
 [[artifact]]
 name = "zentinel-26.11_1-sbom.spdx.json"

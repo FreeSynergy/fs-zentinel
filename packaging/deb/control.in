@@ -1,0 +1,20 @@
+Package: zentinel
+Version: @DEB_VERSION@
+Architecture: @ARCH@
+Maintainer: FreeSynergy <packages@freesynergy.net>
+Section: net
+Priority: optional
+Homepage: https://zentinelproxy.io
+Depends: libc6 (>= 2.34), libgcc-s1, systemd
+Installed-Size: @SIZE@
+Description: Zentinel security-first reverse proxy (FreeSynergy repackaging of upstream release @UPSTREAM@)
+ Zentinel is a reverse proxy built on Pingora: TLS with automatic ACME
+ certificates, static file serving, routing by host and path, rate limiting.
+ .
+ This package is a REPACKAGING of the maker's signed release binary (checked
+ against the maker's SHA-256 and Sigstore signature in CI, then signed again
+ with the FreeSynergy release key). Nothing is compiled by FreeSynergy. Only
+ the packaging differs from upstream: the systemd unit starts /usr/bin/zentinel
+ (upstream says /usr/local/bin); the unit, the sysusers file and the starter
+ configuration /etc/zentinel/zentinel.kdl are upstream's files. The service is
+ not enabled or started by installation.

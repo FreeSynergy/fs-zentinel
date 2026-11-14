@@ -1,0 +1,12 @@
+#!/bin/sh
+# remove keeps /etc/zentinel (conffile rules), the ACME state and the user. purge deletes the state (certificates, ACME account key) and logs.
+set -e
+case "$1" in
+  remove|purge)
+    if [ -d /run/systemd/system ]; then systemctl daemon-reload || true; fi
+    ;;
+esac
+if [ "$1" = purge ]; then
+  rm -rf /var/lib/zentinel /var/log/zentinel
+fi
+exit 0

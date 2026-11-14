@@ -12,11 +12,14 @@ system {
 }
 
 listeners {
-    // Plain HTTP. Also needed for the ACME HTTP-01 challenge (the proxy answers /.well-known/acme-challenge/ itself).
+    // Plain HTTP: only redirects to HTTPS (namespace "redirect" below). Also needed for the ACME HTTP-01 challenge:
+    // the first certificates are fetched at start by a temporary challenge server on the address of the first http listener,
+    // later renewals are answered by the running proxy (upstream docs: crates/proxy/docs/acme.md).
     listener "http" {
         address "0.0.0.0:80"
         protocol "http"
         request-timeout-secs 30
+        namespace "redirect"
     }
 
     listener "https" {
@@ -52,6 +55,28 @@ listeners {
                     challenge-type "http-01"
                 }
             }
+        }
+    }
+}
+
+// A listener that belongs to a namespace serves only that namespace's routes (upstream: crates/config/src/scopes.rs), so port 80
+// redirects everything to HTTPS (301, same host and path; verified locally with test_serve.sh, the query string is NOT carried over)
+// while port 443 serves the sites.
+namespace "redirect" {
+    filters {
+        filter "to-https" {
+            type "redirect"
+            scheme "https"
+            status-code 301
+        }
+    }
+    routes {
+        route "to-https" {
+            matches {
+                path-prefix "/"
+            }
+            service-type "web"
+            filters "to-https"
         }
     }
 }
