@@ -2,7 +2,7 @@
   "format": 1,
   "repo": "fs-zentinel",
   "program": "Zentinel",
-  "version": "26.11_1",
+  "version": "26.11_2",
   "capabilities": [
     {
       "tag": "gateway.reverse-proxy",
@@ -58,7 +58,7 @@
   "files": [
     {
       "path": "config/zentinel.kdl",
-      "sha256": "c7ecf87a932092a46f61be6ae73c98b2165d93e54b0e4fbb470eca149a2839f0",
+      "sha256": "f541cf409cbfd3ddea4c77cb48995ee7b2758bad40c9a2094c82b9d5af8e220f",
       "placeholders": [
         "fs/kanidm/domain",
         "fs/zentinel/tls-key#file"

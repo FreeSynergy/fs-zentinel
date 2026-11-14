@@ -7,8 +7,8 @@ adr = ["0068", "0067", "0054", "0015"]
 
 [upstream]
 name = "Zentinel"
-version = "26.11_1"
-released = "2026-11-07"
+version = "26.11_2"
+released = "2026-11-12"
 license = "Apache-2.0"
 homepage = "https://zentinelproxy.io"
 repository = "https://github.com/zentinelproxy/zentinel"
@@ -17,14 +17,19 @@ repository = "https://github.com/zentinelproxy/zentinel"
 # SHA-256 files and SBOMs. We mirror the maker's package unchanged, verify it in CI, then add our own signature.
 [source]
 repository = "https://github.com/zentinelproxy/zentinel"
-tag = "26.11_1"
+tag = "26.11_2"
 tag_signed = false
-commit = "b3a8659846f70d3e78623dce6a6860cd7e2bcff2"
+commit = "ea8ccf037cf62fd5c39b0bc9d7748869a25ea53b"   # the annotated tag object is 3ea4cc77dec95bb6025d6e275e1817f940f82ffb; ls-remote shows this commit as refs/tags/26.11_2^{}
 check = "tag-resolves-to-pinned-commit"
 
 [verification]
 method = "cosign verify-blob --bundle <file>.bundle (Sigstore keyless) plus SHA-256 from <file>.sha256"
-certificate_identity = "https://github.com/zentinelproxy/zentinel/.github/workflows/release.yml@refs/tags/26.11_1"
+certificate_identity = "https://github.com/zentinelproxy/zentinel/.github/workflows/release.yml@refs/tags/26.11_2"
+# Also bound to the commit: the signing certificate carries the GitHub workflow SHA (OID 1.3.6.1.4.1.57264.1.3), repository and ref; read from the
+# maker's certificate of 26.11_2 (amd64 bundle): SHA ea8ccf03..., repository zentinelproxy/zentinel, ref refs/tags/26.11_2. cosign checks them with the flags below.
+certificate_github_workflow_sha = "ea8ccf037cf62fd5c39b0bc9d7748869a25ea53b"
+certificate_github_workflow_repository = "zentinelproxy/zentinel"
+certificate_github_workflow_ref = "refs/tags/26.11_2"
 certificate_oidc_issuer = "https://token.actions.githubusercontent.com"
 where = "GitHub Actions, .github/workflows/mirror.yml (sigstore/cosign-installer; nothing is installed locally)"
 note = "Keyless signing has no fixed key: trust is the certificate identity above plus the public Rekor transparency log."
@@ -32,11 +37,11 @@ note = "Keyless signing has no fixed key: trust is the certificate identity abov
 [build]
 # Nothing is compiled here: the .deb is a REPACKAGING of the verified maker binary (scripts/make-deb.sh, dpkg-deb on the runner).
 # Upstream's own files (systemd unit, sysusers file, starter configuration) go into the package; the only change is ExecStart=/usr/bin/zentinel.
-deb_revision = 1                          # package revision (ADR 0077): Debian version = <upstream with _ as .>-<revision>, e.g. 26.11.1-1 (Debian forbids "_")
+deb_revision = 1                          # package revision (ADR 0077): Debian version = <upstream with _ as .>-<revision>, e.g. 26.11.2-1 (Debian forbids "_")
 deb_arch = ["amd64", "arm64"]            # arm64 is built from the maker's arm64 tarball; the smoke test runs on amd64 only (runner), not verified on arm64
 
 [platform]
-# The maker builds on ubuntu-22.04 (glibc 2.35 by its release.yml comment); the amd64 binary of 26.11_1 needs GLIBC <= 2.34 (objdump -T), libgcc_s, libm, libc.
+# The maker builds on ubuntu-22.04 (glibc 2.35 by its release.yml comment); the amd64 binary of 26.11_2 needs GLIBC <= 2.34 (objdump -T), libgcc_s, libm, libc.
 min_glibc = "2.34"
 # Smoke test (scripts/smoke-deb.sh): the .deb is installed in each of these (pinned by digest, tags resolved 2026-11-14: debian 12, debian 13, ubuntu 22.04, ubuntu 24.04).
 smoke_images = [
@@ -52,39 +57,39 @@ key_fingerprint = "16A4A3EE563AEF51FCF0C55DED7B57C4A1904342"   # FreeSynergy Rel
 public_key = "https://github.com/FreeSynergy/fs-release/blob/main/release-signing-key.asc"
 
 [[artifact]]
-name = "zentinel-26.11_1-linux-amd64.tar.gz"
+name = "zentinel-26.11_2-linux-amd64.tar.gz"
 kind = "binary"
 verification = "maker-cosign-and-sha256"
 
 [[artifact]]
-name = "zentinel-26.11_1-linux-arm64.tar.gz"
+name = "zentinel-26.11_2-linux-arm64.tar.gz"
 kind = "binary"
 verification = "maker-cosign-and-sha256"
 
 [[artifact]]
-name = "zentinel_26.11.1-1_amd64.deb"
+name = "zentinel_26.11.2-1_amd64.deb"
 kind = "deb"
 contents = "REPACKAGING of the verified amd64 binary: /usr/bin/zentinel, upstream's systemd unit (ExecStart path changed) and sysusers file, upstream's starter /etc/zentinel/zentinel.kdl; not enabled or started on install"
 verification = "repackaged-from-verified-maker-binary"
 
 [[artifact]]
-name = "zentinel_26.11.1-1_arm64.deb"
+name = "zentinel_26.11.2-1_arm64.deb"
 kind = "deb"
 contents = "same as amd64, from the maker's arm64 binary; not smoke-tested"
 verification = "repackaged-from-verified-maker-binary"
 
 [[artifact]]
-name = "zentinel-26.11_1-sbom.spdx.json"
+name = "zentinel-26.11_2-sbom.spdx.json"
 kind = "sbom"
 verification = "published-by-maker"
 
 [[artifact]]
-name = "zentinel-26.11_1-sbom.cdx.json"
+name = "zentinel-26.11_2-sbom.cdx.json"
 kind = "sbom"
 verification = "published-by-maker"
 
 [[artifact]]
-name = "zentinel-26.11_1-source.tar.gz"
+name = "zentinel-26.11_2-source.tar.gz"
 kind = "source"
 contents = "git archive of the pinned commit (Apache-2.0: source of the same version travels with the binary)"
 verification = "built-from-pinned-commit"

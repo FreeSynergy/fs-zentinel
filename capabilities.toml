@@ -4,14 +4,14 @@
 [package]
 id = "fs-zentinel"
 upstream = "Zentinel"
-version = "26.11_1"
-checked = "2026-11-11"
+version = "26.11_2"
+checked = "2026-11-14"
 
 [[capability]]
 tag = "gateway.reverse-proxy"
 relation = "provides"
 support = "yes"
-source = "https://github.com/zentinelproxy/zentinel/blob/26.11_1/README.md"
+source = "https://github.com/zentinelproxy/zentinel/blob/26.11_2/README.md"
 text_en = "Reverse proxy with TLS termination, routing by host and path, load balancing, health checks, rate limiting, hot reload (SIGHUP)."
 text_de = "Reverse-Proxy mit TLS-Abschluss, Routing nach Host und Pfad, Lastverteilung, Gesundheitsprüfung, Ratenbegrenzung, Neuladen im Betrieb (SIGHUP)."
 

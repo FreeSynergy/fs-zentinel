@@ -9,7 +9,7 @@ system {
 }
 
 listeners {
-    // No plain-HTTP listener: 26.11_1 has no documented redirect handler (an HTTP-to-HTTPS redirect is on docs/ROADMAP.md).
+    // No plain-HTTP listener here. A working redirect (namespace + redirect filter) is in examples/zentinel.kdl.in; adopting it is on docs/ROADMAP.md.
     listener "https" {
         address "0.0.0.0:443"
         protocol "https"

@@ -10,5 +10,8 @@ useDefault = true
 [[allowlists]]
 description = "Public OpenPGP fingerprint of the FreeSynergy release key (mirror.toml, [signing] key_fingerprint)"
 targetRules = ["generic-api-key"]
+# Both conditions must hold (gitleaks: the default of an allowlist is OR, which would let the path alone hide EVERY finding in mirror.toml):
+# only in mirror.toml AND only exactly this value (the regex is matched against the found secret and anchored).
+condition = "AND"
 paths = ['''^mirror\.toml$''']
-regexes = ['''16A4A3EE563AEF51FCF0C55DED7B57C4A1904342''']
+regexes = ['''^16A4A3EE563AEF51FCF0C55DED7B57C4A1904342$''']

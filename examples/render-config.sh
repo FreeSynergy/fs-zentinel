@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Render zentinel.kdl.in into a Zentinel configuration and (optionally) copy the placeholder page into each site's document root.
-#   SITE1=freesynergy.net SITE2=helfa.org SITE3=freeplanetearth.org ACME_EMAIL=admin@helfa.org \
+#   SITE1=<domain-1> SITE2=<domain-2> SITE3=<domain-3> ACME_EMAIL=<contact-address> \
 #     ./render-config.sh [--staging|--production] [--install-pages] <output.kdl>
 # Environment (all required except the last two): SITE1 SITE2 SITE3 (domains), ACME_EMAIL (contact for Let's Encrypt),
 #   ACME_STAGING (default true: Let's Encrypt staging, no rate limits, untrusted certificates; --production sets it to false),
@@ -18,11 +18,12 @@ for a in "$@"; do
     --production) staging=false ;;
     --install-pages) install=1 ;;
     --dns01-hetzner) tpl=zentinel-dns01-hetzner.kdl.in ;;
+    --http-only) tpl=zentinel-http-only.kdl.in ;;
     -*) die "unknown option $a" ;;
     *) [ -z "$out" ] || die "only one output file"; out=$a ;;
   esac
 done
-[ -n "$out" ] || die "usage: render-config.sh [--staging|--production] [--install-pages] [--dns01-hetzner] <output.kdl>"
+[ -n "$out" ] || die "usage: render-config.sh [--staging|--production] [--install-pages] [--dns01-hetzner|--http-only] <output.kdl>"
 : "${SITE1:?SITE1 is not set}" "${SITE2:?SITE2 is not set}" "${SITE3:?SITE3 is not set}" "${ACME_EMAIL:?ACME_EMAIL is not set}"
 webroot=${WEBROOT:-/srv/www}
 tokenfile=${HETZNER_TOKEN_FILE:-/etc/zentinel/secrets/hetzner-dns-token}   # only the PATH; the token itself never passes through this script

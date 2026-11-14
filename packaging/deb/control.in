@@ -18,3 +18,7 @@ Description: Zentinel security-first reverse proxy (FreeSynergy repackaging of u
  (upstream says /usr/local/bin); the unit, the sysusers file and the starter
  configuration /etc/zentinel/zentinel.kdl are upstream's files. The service is
  not enabled or started by installation.
+ .
+ WARNING: "apt purge zentinel" deletes /var/lib/zentinel and /var/log/zentinel,
+ including the ACME account key and all issued certificates and private keys.
+ "apt remove" keeps them.

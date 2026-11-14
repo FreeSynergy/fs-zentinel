@@ -4,8 +4,8 @@
 # <dist-dir> holds zentinel-<V>-linux-{amd64,arm64}.tar.gz (already checked by the workflow); <upstream-src-dir> is the checkout of the
 # pinned commit (its deploy/ files are used unchanged except the binary path in the unit). Needs dpkg-deb, tar, readelf (runner: ubuntu-24.04).
 # SOURCE_DATE_EPOCH is taken from the pinned commit; the files are written with that mtime, so the package is reproducible.
-# Debian version: upstream "26.11_1" has an underscore, which Debian versions do not allow: "_" becomes "." (26.11.1) and the revision
-# from mirror.toml follows: 26.11.1-1. Order stays right (26.11.2 > 26.11.1 > 26.10.11).
+# Debian version: upstream "26.11_2" has an underscore, which Debian versions do not allow: "_" becomes "." (26.11.2) and the revision
+# from mirror.toml follows: 26.11.2-1. Order stays right (26.11.2 > 26.11.1 > 26.10.11).
 set -euo pipefail
 die() { echo "::error::$*" >&2; exit 1; }
 dist=$(cd "${1:?usage: make-deb.sh <dist-dir> <upstream-src-dir>}" && pwd)
@@ -50,6 +50,7 @@ COPY
 FreeSynergy repackaging of the Zentinel release $V ($arch).
 Binary: the maker's release tarball, SHA-256 and Sigstore signature checked in CI (see mirror.toml in https://github.com/FreeSynergy/fs-zentinel).
 Changed against upstream: the ExecStart path in zentinel.service (/usr/bin instead of /usr/local/bin). Everything else is upstream's.
+WARNING: "apt purge zentinel" deletes /var/lib/zentinel and /var/log/zentinel (ACME account key, certificates, private keys, logs). "apt remove" keeps them.
 Start:  systemctl enable --now zentinel   (not done by the installation). Configuration: /etc/zentinel/zentinel.kdl, test: zentinel test -c <file>.
 RM
   find "$p" -type d -exec chmod 0755 {} +

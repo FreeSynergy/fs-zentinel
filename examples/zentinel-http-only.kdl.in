@@ -1,0 +1,76 @@
+// Zentinel: three sites ("we are rebuilding" page), plain HTTP only, NO TLS and no ACME: the interim configuration for the first start,
+// before the DNS records point to this server (Zentinel stops at start when the first certificate cannot be issued).
+// TEMPLATE. Render it with render-config.sh; the upper-case markers between two @ signs are replaced, nothing else. No secrets are needed or stored here.
+// Sources of every setting: examples/README.md (upstream docs: crates/proxy/docs/acme.md, config/examples/acme-san.kdl, kdl-format.md).
+//
+// Ports 80 and 443 are bound by the unprivileged user "zentinel" through CAP_NET_BIND_SERVICE in the shipped systemd unit.
+// ACME state (account key, certificates) lives in /var/lib/zentinel/acme (systemd StateDirectory, mode 0700).
+schema-version "1.0"
+
+system {
+    worker-threads 0
+    graceful-shutdown-timeout-secs 30
+}
+
+listeners {
+    listener "http" {
+        address "0.0.0.0:80"
+        protocol "http"
+        request-timeout-secs 30
+    }
+}
+
+routes {
+    route "site1" {
+        matches {
+            host "@SITE1@"
+            path-prefix "/"
+        }
+        service-type "static"
+        static-files {
+            root "@WEBROOT@/@SITE1@"
+            index "index.html"
+            cache-control "public, max-age=300"
+            compress #true
+        }
+    }
+    route "site2" {
+        matches {
+            host "@SITE2@"
+            path-prefix "/"
+        }
+        service-type "static"
+        static-files {
+            root "@WEBROOT@/@SITE2@"
+            index "index.html"
+            cache-control "public, max-age=300"
+            compress #true
+        }
+    }
+    route "site3" {
+        matches {
+            host "@SITE3@"
+            path-prefix "/"
+        }
+        service-type "static"
+        static-files {
+            root "@WEBROOT@/@SITE3@"
+            index "index.html"
+            cache-control "public, max-age=300"
+            compress #true
+        }
+    }
+}
+
+limits {
+    max-header-size 8192
+    max-header-count 100
+    max-body-size 1048576
+}
+
+observability {
+    logging {
+        level "info"
+        format "json"
+    }
+}

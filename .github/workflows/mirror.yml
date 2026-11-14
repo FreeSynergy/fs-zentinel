@@ -35,6 +35,7 @@ jobs:
           print("repository=" + m["source"]["repository"]); print("tag=" + m["source"]["tag"]); print("commit=" + m["source"]["commit"])
           print("version=" + m["upstream"]["version"])
           print("identity=" + m["verification"]["certificate_identity"]); print("issuer=" + m["verification"]["certificate_oidc_issuer"])
+          print("wf_sha=" + m["verification"]["certificate_github_workflow_sha"]); print("wf_repo=" + m["verification"]["certificate_github_workflow_repository"]); print("wf_ref=" + m["verification"]["certificate_github_workflow_ref"])
           PY
       - name: Upstream tag must still resolve to the pinned commit
         env:
@@ -53,6 +54,9 @@ jobs:
           V: ${{ steps.pin.outputs.version }}
           IDENTITY: ${{ steps.pin.outputs.identity }}
           ISSUER: ${{ steps.pin.outputs.issuer }}
+          WF_SHA: ${{ steps.pin.outputs.wf_sha }}
+          WF_REPO: ${{ steps.pin.outputs.wf_repo }}
+          WF_REF: ${{ steps.pin.outputs.wf_ref }}
         run: |
           set -euo pipefail
           mkdir -p dist upstream
@@ -67,7 +71,8 @@ jobs:
             f="zentinel-$V-$arch.tar.gz"
             sha256sum --check --strict "$f.sha256"
             grep -F "  $f" checksums.txt | sha256sum --check --strict -
-            cosign verify-blob --bundle "$f.bundle" --certificate-identity "$IDENTITY" --certificate-oidc-issuer "$ISSUER" "$f"
+            cosign verify-blob --bundle "$f.bundle" --certificate-identity "$IDENTITY" --certificate-oidc-issuer "$ISSUER" \
+              --certificate-github-workflow-sha "$WF_SHA" --certificate-github-workflow-repository "$WF_REPO" --certificate-github-workflow-ref "$WF_REF" "$f"
           done
           cp zentinel-"$V"-linux-*.tar.gz zentinel-"$V"-sbom.*.json ../dist/
       - name: Source tarball and licence (Apache-2.0)
@@ -133,6 +138,7 @@ jobs:
           print("repository=" + m["source"]["repository"]); print("tag=" + m["source"]["tag"]); print("commit=" + m["source"]["commit"])
           print("version=" + m["upstream"]["version"])
           print("identity=" + m["verification"]["certificate_identity"]); print("issuer=" + m["verification"]["certificate_oidc_issuer"])
+          print("wf_sha=" + m["verification"]["certificate_github_workflow_sha"]); print("wf_repo=" + m["verification"]["certificate_github_workflow_repository"]); print("wf_ref=" + m["verification"]["certificate_github_workflow_ref"])
           PY
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
